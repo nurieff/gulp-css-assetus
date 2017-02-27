@@ -92,12 +92,6 @@ Assetus.prototype.onEnd = function (cb) {
      */
     var sModel = self.AssetusList.push(sprtie);
 
-    if (method.indexOf('each') !== -1) {
-      sModel.isFull();
-    } else if(arg) {
-      sModel.used(arg);
-    }
-
     find = true;
     return str;
   });

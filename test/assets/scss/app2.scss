@@ -1,0 +1,8 @@
+$auth-sprite: "assets/images/auth/vk.png";
+
+.icon {
+  background-image: assetus-url($auth-sprite);
+  background-size: assetus-size($auth-sprite);
+  height: assetus-height($auth-sprite);
+  width: assetus-width($auth-sprite);
+}

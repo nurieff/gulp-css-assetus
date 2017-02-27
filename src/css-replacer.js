@@ -64,35 +64,28 @@ AssetusCssReplacer.prototype._regAsProperty = function (mod, dopArgs) {
 
 AssetusCssReplacer.prototype._common = function () {
 
-  var allow = ['width','height','position'];
+  var allow = ['width','height'];
   var self = this;
   this.css = this.css.replace(this._reg(allow, true), function () {
     var propertiy = arguments[1];
     var str = arguments[2];
-    var img = arguments[3];
 
     if (!self.AssetusList.get(str)) {
       if (['height','width'].indexOf(propertiy) !== -1) {
         return 'auto';
       }
 
-      return '0px 0px';
+      return '';
     }
 
-    if (!img) {
-      if (propertiy === 'position') {
-        return 'auto';
-      }
-    }
-
-    return self.AssetusList.get(str)[propertiy](img);
+    return self.AssetusList.get(str)[propertiy]();
   });
 
   return this;
 };
 
 AssetusCssReplacer.prototype._forParent = function () {
-  var allow = ['url','size'];
+  var allow = ['url','size','inline'];
   var self = this;
   this.css = this.css.replace(this._reg(allow), function () {
     var propertiy = arguments[1];
@@ -112,9 +105,9 @@ AssetusCssReplacer.prototype._forParent = function () {
   return this;
 };
 
-AssetusCssReplacer.prototype._phw = function () {
+AssetusCssReplacer.prototype._ihw = function () {
   var self = this;
-  this.css = this.css.replace(this._regAsProperty('phw', true), function () {
+  this.css = this.css.replace(this._regAsProperty('ihw', true), function () {
     var str = arguments[1];
     var img = arguments[2];
 
@@ -123,66 +116,10 @@ AssetusCssReplacer.prototype._phw = function () {
     }
 
     return [
-      'background-position: ' + self.AssetusList.get(str).position(img),
-      'height: ' + self.AssetusList.get(str).height(img),
-      'width: ' + self.AssetusList.get(str).width(img)
+      'background-image: ' + self.AssetusList.get(str).position(),
+      'height: ' + self.AssetusList.get(str).height(),
+      'width: ' + self.AssetusList.get(str).width()
     ].join(';');
-  });
-
-  return this;
-};
-
-AssetusCssReplacer.prototype._each = function () {
-  var self = this;
-
-  var r = [];
-  r.push('([^\\s\\{]+)\\s*?\\{');
-  r.push('([^\\}]+|\\n+)?');
-  r.push(this._searchPrefix + '\\:\\s*?');
-  r.push('each');
-  r.push("\\(\\\"([^\\)\\\"]+)\\\"\\);?");
-  r.push('([^\\}]+|\\n+)?');
-  r.push('\\}');
-
-  this.css = this.css.replace(new RegExp(r.join(''), 'gi'), function () {
-
-    var prefix = arguments[1];
-    var before = arguments[2];
-    var str = arguments[3];
-    var after = arguments[4];
-
-    if (prefix.indexOf('.') === -1) {
-      prefix = prefix + '.';
-    }
-
-    if (!self.AssetusList.get(str)) {
-      return '';
-    }
-
-    var css = [];
-
-    var nodes = self.AssetusList.get(str).all();
-    var n;
-
-    for (var key in nodes) {
-      if (!nodes.hasOwnProperty(key)) continue;
-      n = [];
-      n.push(prefix.trim() + '-' + key);
-      n.push('{');
-      n.push(before);
-      n.push([
-        "background-position:" + nodes[key].position,
-        "height:" + nodes[key].height,
-        "width:" + nodes[key].width,
-        ''
-      ].join("; "));
-      n.push(after);
-      n.push('}');
-
-      css.push(n.join(' '));
-    }
-
-    return css.join("\n");
   });
 
   return this;
@@ -194,8 +131,7 @@ AssetusCssReplacer.prototype._each = function () {
 AssetusCssReplacer.prototype.run = function () {
     this._forParent()
     ._common()
-    ._phw()
-    ._each()
+    ._ihw()
   ;
 
   return this;
