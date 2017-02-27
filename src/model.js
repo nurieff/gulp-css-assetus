@@ -37,7 +37,7 @@ function AssetusModel(list, str) {
   this._width = null;
   this._height = null;
 
-  var result = str.match(/\/([^\/]+)\/\*\.([a-z]{2,})$/i);
+  var result = str.match(/\/([^\/]+?)\.([a-z]{2,})$/i);
   this._name = 'name' in config ? config['name'] : result[1];
   this._ext = result[2];
   this._basename = this._name + '.' + this._ext;
@@ -51,7 +51,9 @@ AssetusModel.prototype._spriteHandler = function (callback, err, result) {
 
   this._buffer = result;
 
-  console.log(result);
+  var dimensions = sizeOf(result);
+  this._width = dimensions.width;
+  this._height = dimensions.height;
 
   var imgFile = new gutil.File({
     path: this._basename,
@@ -62,40 +64,22 @@ AssetusModel.prototype._spriteHandler = function (callback, err, result) {
   callback(imgFile);
 };
 
-AssetusModel.prototype.isFull = function () {
-  this._isFull = true;
-};
-
-AssetusModel.prototype.used = function (u) {
-  if (this._used.indexOf(u) === -1) {
-    this._used.push(u);
-  }
-};
-
 AssetusModel.prototype.url = function () {
   return 'url("' + this.list.assetus.config.imageDirCSS + this._basename + '")';
 };
 
-AssetusModel.prototype.height = function (spriteName) {
+AssetusModel.prototype.height = function () {
 
-  if (!spriteName) {
-    return this._spriteHeight + 'px';
-  }
-
-  return this._spriteImages[spriteName].height + 'px';
+  return this._height + 'px';
 };
 
 AssetusModel.prototype.width = function (spriteName) {
 
-  if (!spriteName) {
-    return this._spriteWidth + 'px';
-  }
-
-  return this._spriteImages[spriteName].width + 'px';
+  return this._width + 'px';
 };
 
 AssetusModel.prototype.size = function () {
-  return this._spriteWidth + 'px ' + this._spriteHeight + 'px';
+  return this._width + 'px ' + this._height + 'px';
 };
 
 module.exports = AssetusModel;

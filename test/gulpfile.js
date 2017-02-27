@@ -4,7 +4,7 @@ var gulp = require('gulp')
 
 gulp.task('css', function () {
   return gulp.src('./assets/css/*.css')
-    .pipe(spritus({
+    .pipe(assetus({
       imageDirSave: 'public/images/',
       searchPrefix: 's'
     }))
@@ -14,7 +14,7 @@ gulp.task('css', function () {
 gulp.task('scss', function () {
   return gulp.src('./assets/scss/**/*.scss')
     .pipe(sass().on('error', sass.logError))
-    .pipe(spritus({
+    .pipe(assetus({
       imageDirSave: 'public/images/'
     }))
     .pipe(gulp.dest('./public/css'));
