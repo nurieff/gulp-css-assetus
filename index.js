@@ -12,7 +12,6 @@ var
 function Assetus(config) {
 
   this.config = {
-    padding: 2,
     searchPrefix: 'assetus',
     saveImage: true,
     withImagemin: true,
@@ -92,6 +91,10 @@ Assetus.prototype.onEnd = function (cb) {
      */
     var sModel = self.AssetusList.push(sprtie);
 
+    if (method.indexOf('url') !== -1 || method.indexOf('ihv') !== -1) {
+      sModel.isSaveImage();
+    }
+
     find = true;
     return str;
   });
@@ -119,6 +122,32 @@ Assetus.prototype._saveFile = function (file, path, fromImagemin) {
       console.log('assetus[save file]: ' + path + file.path);
     }
   });
+};
+
+Assetus.prototype.processingImagemin = function (name, buffer, callback) {
+  imagemin.buffer(buffer, {
+    plugins: this.config.withImageminPlugins ? this.config.withImageminPlugins : [
+        imageminPngquant({
+          quality: '60-70',
+          speed: 1
+        })
+      ]
+  })
+    .then(function (data) {
+
+      var originalSize = buffer.length;
+      var optimizedSize = data.length;
+      var saved = originalSize - optimizedSize;
+      var percent = (originalSize > 0 ? (saved / originalSize) * 100 : 0).toFixed(1).replace(/\.0$/, '');
+      var msg = saved > 0 ? '- saved ' + prettyBytes(saved) + ' (' + percent + '%)' : ' -';
+      console.log('assetus[imagemin]: ' + name + ' ' + msg);
+
+      callback(data);
+    })
+    .catch(function (err) {
+      console.log('imagemin: ' + name + ' Error');
+      console.log(err);
+    });
 };
 
 Assetus.prototype._saveImagemin = function (file, path) {
@@ -154,7 +183,9 @@ Assetus.prototype._saveImagemin = function (file, path) {
 
 Assetus.prototype.runHandler = function (imgFile) {
 
-  this.imgFiles.push(imgFile);
+  if (imgFile) {
+    this.imgFiles.push(imgFile);
+  }
 
   if (!this.AssetusList.isComplete()) return;
 

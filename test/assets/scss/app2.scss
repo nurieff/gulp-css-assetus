@@ -1,8 +1,13 @@
-$auth-sprite: "assets/images/auth/vk.png";
+$auth-sprite: "assets/images/auth/vk.png?name=nevk";
+$radio-sprite: "assets/images/radio.png";
 
-.icon {
+.vk {
   background-image: assetus-url($auth-sprite);
   background-size: assetus-size($auth-sprite);
   height: assetus-height($auth-sprite);
   width: assetus-width($auth-sprite);
+}
+
+.radio {
+  background-image: assetus-inline($radio-sprite);
 }

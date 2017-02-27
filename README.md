@@ -9,3 +9,4 @@ Easy to use with your CSS, SASS (SCSS) and others
 * assetus-inline
 * assetus-width
 * assetus-height
+* assetus-size

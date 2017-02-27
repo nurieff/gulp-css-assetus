@@ -1,6 +1,6 @@
 {
   "name": "gulp-css-assetus",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Parses your styles to find the assets and then saves and compresses",
   "main": "index.js",
   "scripts": {
