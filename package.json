@@ -1,6 +1,6 @@
 {
   "name": "gulp-css-assetus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parses your CSS to find the assets and then saves (or convert to inline) and compresses",
   "main": "index.js",
   "scripts": {
@@ -39,6 +39,7 @@
     "gulp-util": "^3.0.8",
     "image-size": "^0.5.1",
     "mkdirp": "^0.5.1",
+    "glob": "^7.1.1",
     "pretty-bytes": "^4.0.2"
   }
 }
