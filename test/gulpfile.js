@@ -6,7 +6,7 @@ gulp.task('css', function () {
   return gulp.src('./assets/css/*.css')
     .pipe(assetus({
       imageDirSave: 'public/images/',
-      searchPrefix: 's'
+      searchPrefix: 'a'
     }))
     .pipe(gulp.dest('./public/css'));
 });

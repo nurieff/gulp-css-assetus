@@ -1,7 +1,7 @@
 {
   "name": "gulp-css-assetus",
   "version": "1.0.0",
-  "description": "Parses your styles to find the assets and then saves and compresses",
+  "description": "Parses your CSS to find the assets and then saves (or convert to inline) and compresses",
   "main": "index.js",
   "scripts": {
     "start": "gulp"
@@ -13,22 +13,32 @@
   "keywords": [
     "css",
     "scss",
-    "assets",
     "imagemin",
-    "gulp"
+    "compress",
+    "gulp",
+    "assets",
+    "base64",
+    "inline",
+    "background-image",
+    "background-size",
+    "url",
+    "size",
+    "image"
   ],
   "author": "Marat Nuriev",
   "email": "nurieff@gmail.com",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
-    "gulp-util": "^3.0.8",
-    "image-size": "^0.5.1",
+  "dependencies": {
     "imagemin": "^5.2.2",
     "imagemin-pngquant": "^5.0.0",
-    "mkdirp": "^0.5.1",
     "pngquant-bin": "^3.1.1",
-    "pretty-bytes": "^4.0.2",
     "through2": "^2.0.3"
+  },
+  "devDependencies": {
+    "file-type": "^4.1.0",
+    "gulp-util": "^3.0.8",
+    "image-size": "^0.5.1",
+    "mkdirp": "^0.5.1",
+    "pretty-bytes": "^4.0.2"
   }
 }
