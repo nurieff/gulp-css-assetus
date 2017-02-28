@@ -82,7 +82,7 @@ Assetus.prototype.onEnd = function (cb) {
   var self = this;
 
   var find = false;
-  this.strCSS.replace(new RegExp(this.config.searchPrefix + "\\-|\\:([^\\(]+)\\(\\\"([^\\\"]+)\\\"(\\)|,\\s*?\\\"([^\\)\\\"]*)\\\")", 'ig'), function (str) {
+  this.strCSS.replace(new RegExp(this.config.searchPrefix + "[\\-\\:]{1}([^\\(]+)\\(\\\"([^\\\"]+)\\\"(\\)|,\\s*?\\\"([^\\)\\\"]*)\\\")", 'ig'), function (str) {
     var sprtie = arguments[2];
     var method = arguments[1];
     var arg = arguments[4] ? arguments[4] : null;
