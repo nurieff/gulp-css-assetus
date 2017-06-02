@@ -115,7 +115,7 @@ Assetus.prototype._saveFile = function (file, path, fromImagemin) {
   fs.unlink(filepath, function (err) {
     if (err) throw err;
 
-    fs.writeFile(filepath, file.contents, function () {
+    fs.writeFile(filepath, file.contents, function (err) {
       if (err) throw err;
 
       if (!fromImagemin) {
