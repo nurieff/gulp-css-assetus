@@ -5,6 +5,7 @@ var
   , through = require('through2').obj
   , mkdirp = require('mkdirp')
   , fs = require('fs')
+  , pathPlugin = require('path')
   , prettyBytes = require('pretty-bytes')
   , imageminPngquant = require('imagemin-pngquant')
   ;
@@ -112,15 +113,19 @@ Assetus.prototype.onEnd = function (cb) {
 Assetus.prototype._saveFile = function (file, path, fromImagemin) {
   var filepath = path + file.path;
 
-  fs.unlink(filepath, function (err) {
-    if (err) {};
+  var dirPath = pathPlugin.dirname(filepath);
 
-    fs.writeFile(filepath, file.contents, function (err) {
-      if (err) throw err;
+  mkdirp(dirPath, function (err) {
+    fs.unlink(filepath, function (err) {
+      if (err) {}
 
-      if (!fromImagemin) {
-        console.log('assetus[save file]: ' + path + file.path);
-      }
+      fs.writeFile(filepath, file.contents, function (err) {
+        if (err) throw err;
+
+        if (!fromImagemin) {
+          console.log('assetus[save file]: ' + path + file.path);
+        }
+      });
     });
   });
 };
