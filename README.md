@@ -14,7 +14,7 @@ npm install gulp-css-assetus --save
 ## Example
 #### Input SCSS
 ```scss
-$vk: "assets/images/vk.png?name=vkontakte";
+$vk: "assets/images/vk.png?name=somedir/vkontakte";
 $facebook: "assets/images/facebook.png";
 
 .vk {
