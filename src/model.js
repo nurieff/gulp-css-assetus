@@ -1,6 +1,6 @@
 var
   glob = require('glob')
-  , gutil = require('gulp-util')
+  , Vinyl = require('vinyl')
   , querystring = require('querystring')
   , sizeOf = require('image-size')
   , fileType = require('file-type')
@@ -79,7 +79,7 @@ AssetusModel.prototype._spriteHandler = function (callback, err, result) {
 
   var imgFile = null;
   if (this._isSaveImage) {
-    imgFile = new gutil.File({
+    imgFile = new Vinyl({
       path: this._basename,
       contents: result
     });

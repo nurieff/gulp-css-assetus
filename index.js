@@ -223,7 +223,7 @@ Assetus.prototype.runHandler = function (imgFile) {
 
   }
 
-  this.css.contents = new Buffer(this.strCSS);
+  this.css.contents = Buffer.from(this.strCSS);
 
   this.imgStream.push(null);
   this.cssStream.push(this.css);
