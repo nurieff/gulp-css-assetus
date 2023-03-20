@@ -1,125 +1,112 @@
-var
-  glob = require('glob')
-  , Vinyl = require('vinyl')
-  , querystring = require('querystring')
-  , sizeOf = require('image-size')
-  , fileType = require('file-type')
-  , fs = require('fs')
-  ;
+import Vinyl from 'vinyl';
+import querystring from 'node:querystring';
+import sizeOf from 'image-size';
+import {fileTypeFromFile as fileType} from 'file-type';
+import fs from 'node:fs';
 
-/**
- * @param {AssetusList} list
- * @param {String} str
- * @constructor
- */
-function AssetusModel(list, str) {
+export default class AssetusModel {
 
-  var config = {};
-  if (str.indexOf('?') !== false) {
-    str = str.replace(/\?(.+)$/ig, function (s) {
-      config = querystring.parse(arguments[1]);
-      return '';
-    });
-  }
+  config = {}
 
   /**
    * @type {AssetusList}
    */
-  this.list = list;
+  list = null;
 
-  /**
-   * @type {String}
-   * @private
-   */
-  this._str = str;
-  this._path = str.indexOf('/') === 0 ? str : this.list.assetus.rootPath + str;
+  constructor(list, str) {
+    if (str && str.indexOf('?') !== false) {
+      str = str.replace(/\?(.+)$/ig, (...args) => {
+        this.config = querystring.parse(args[1]);
+        return '';
+      });
+    }
 
-  this._buffer = null;
-  this._inline = null;
-  this._width = null;
-  this._height = null;
-  this._mime = null;
+    this.list = list;
+    this.str = str;
 
-  this._isSaveImage = false;
+    this.init();
+  }
 
-  var result = str.match(/\/([^\/]+?)\.?([a-z]*)$/i);
-  this._name = 'name' in config ? config['name'] : result[1];
-  this._ext = result[2] ? result[2] : null;
-  this._basename = this._name + '.' + this._ext;
+  init() {
+    this.path = this.str.indexOf('/') === 0 ? this.str : this.list.assetus.rootPath + this.str;
+
+    this.buffer = null;
+    this.resultInline = null;
+    this.resultWidth = null;
+    this.resultHeight = null;
+    this.mime = null;
+    this.isSaveImage = false;
+
+    const result = this.str.match(/\/([^\/]+?)\.?([a-z]*)$/i);
+    this.name = 'name' in this.config ? this.config['name'] : result[1];
+    this.ext = result[2] ? result[2] : null;
+    this.basename = this.name + '.' + this.ext;
+  }
+
+  run(callback) {
+    fs.readFile(this.path, this.handler.bind(this, callback));
+  }
+
+  handler(callback, err, result) {
+    this.buffer = result;
+
+    fileType(this.path).then((ftype) => {
+      this.mime = ftype.mime;
+      if (!this.ext) {
+        this.ext = ftype.ext;
+      }
+
+      var dimensions = sizeOf(result);
+      this.resultWidth = dimensions.width;
+      this.resultHeight = dimensions.height;
+
+      if (!this.isSaveImage && this.list.assetus.config.withImagemin) {
+        this.list.assetus.processingImagemin('base64:' + this.path, this.buffer, (data) => {
+          this.list.incrementComplete();
+          this.buffer = data;
+          callback(null);
+        });
+        return;
+      }
+
+      let imgFile = null;
+      if (this.isSaveImage) {
+        imgFile = new Vinyl({
+          path: this.basename,
+          contents: result
+        });
+      }
+
+      this.list.incrementComplete();
+      callback(imgFile);
+    });
+  }
+
+  setIsSaveImage() {
+    this.isSaveImage = true;
+  };
+
+  url() {
+    return 'url("' + this.list.assetus.config.imageDirCSS + this.basename + '")';
+  };
+
+  height() {
+    return this.resultHeight + 'px';
+  };
+
+  width() {
+    return this.resultWidth + 'px';
+  };
+
+  size() {
+    return this.resultWidth + 'px ' + this.resultHeight + 'px';
+  };
+
+  inline() {
+    if (!this.resultInline) {
+      this.resultInline = this.buffer.toString('base64');
+    }
+
+    return 'url(data:' + this.mime + ';base64,' + this.resultInline + ')';
+  };
 }
-
-AssetusModel.prototype.run = function (callback) {
-  fs.readFile(this._path, this._spriteHandler.bind(this, callback));
-};
-
-AssetusModel.prototype._spriteHandler = function (callback, err, result) {
-
-  this._buffer = result;
-
-  var ftype = fileType(result);
-
-  this._mime = ftype.mime;
-  if (!this._ext) {
-    this._ext = ftype.ext;
-  }
-
-  var dimensions = sizeOf(result);
-  this._width = dimensions.width;
-  this._height = dimensions.height;
-
-  if (!this._isSaveImage && this.list.assetus.config.withImagemin) {
-    var self = this;
-    this.list.assetus.processingImagemin('base64:' + this._path, this._buffer, function (data) {
-      self.list.incrementComplete();
-      self._buffer = data;
-      callback(null);
-    });
-    return;
-  }
-
-  var imgFile = null;
-  if (this._isSaveImage) {
-    imgFile = new Vinyl({
-      path: this._basename,
-      contents: result
-    });
-  }
-
-  this.list.incrementComplete();
-  callback(imgFile);
-
-
-};
-
-AssetusModel.prototype.isSaveImage = function () {
-  this._isSaveImage = true;
-};
-
-AssetusModel.prototype.url = function () {
-  return 'url("' + this.list.assetus.config.imageDirCSS + this._basename + '")';
-};
-
-AssetusModel.prototype.height = function () {
-
-  return this._height + 'px';
-};
-
-AssetusModel.prototype.width = function (spriteName) {
-
-  return this._width + 'px';
-};
-
-AssetusModel.prototype.size = function () {
-  return this._width + 'px ' + this._height + 'px';
-};
-
-AssetusModel.prototype.inline = function () {
-
-  if (!this._inline) {
-    this._inline = this._buffer.toString('base64');
-  }
-
-  return 'url(data:' + this._mime + ';base64,' + this._inline + ')';
-};
-
-module.exports = AssetusModel;

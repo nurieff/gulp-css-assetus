@@ -1,249 +1,230 @@
-var
-  AssetusList = require('./src/list')
-  , AssetusCssReplacer = require('./src/css-replacer')
-  , imagemin = require('imagemin')
-  , through = require('through2').obj
-  , mkdirp = require('mkdirp')
-  , fs = require('fs')
-  , pathPlugin = require('path')
-  , prettyBytes = require('pretty-bytes')
-  , imageminPngquant = require('imagemin-pngquant')
-  ;
+import AssetusList from "./src/list.js";
+import AssetusCssReplacer from "./src/css-replacer.js";
+import imagemin from "imagemin";
+import through2 from "through2";
+import { mkdirp } from 'mkdirp'
+import fs from "node:fs";
+import pathPlugin from "node:path";
+import prettyBytes from "pretty-bytes";
+import imageminPngquant from "imagemin-pngquant";
 
-function Assetus(config) {
+const through = through2.obj;
 
-  this.config = {
-    searchPrefix: 'assetus',
-    saveImage: true,
-    withImagemin: true,
-    withImageminPlugins: null,
-    imageDirCSS: '../images/',
-    imageDirSave: 'public/images/'
-  };
+class Assetus {
+  constructor(config) {
+    this.config = {
+      searchPrefix: 'assetus',
+      saveImage: true,
+      withImagemin: true,
+      withImageminPlugins: null,
+      imageDirCSS: '../images/',
+      imageDirSave: 'public/images/'
+    };
 
-  /**
-   * @type {Buffer}
-   */
-  this.css = null;
+    /**
+     * @type {Buffer}
+     */
+    this.css = null;
 
-  /**
-   * @type {String}
-   */
-  this.strCSS = null;
+    /**
+     * @type {String}
+     */
+    this.strCSS = null;
 
-  this.imgStream = through();
-  this.cssStream = through();
-  this.retStream = null;
+    this.imgStream = through();
+    this.cssStream = through();
+    this.retStream = null;
 
-  /**
-   * @type {Function}
-   */
-  this.endCallback = null;
+    /**
+     * @type {Function}
+     */
+    this.endCallback = null;
 
-  /**
-   * @type {Array}
-   */
-  this.imgFiles = [];
+    /**
+     * @type {Array}
+     */
+    this.imgFiles = [];
 
-  /**
-   * @type {AssetusList}
-   */
-  this.AssetusList = null;
+    /**
+     * @type {AssetusList}
+     */
+    this.AssetusList = null;
 
-  this.rootPath = process.cwd() + '/';
+    this.rootPath = process.cwd() + '/';
 
-  if (config) {
-    for (var key in config) {
-      if (!config.hasOwnProperty(key)) continue;
+    if (config) {
+      for (let key in config) {
+        if (!config.hasOwnProperty(key)) continue;
 
-      if (key in this.config) {
-        this.config[key] = config[key];
+        if (key in this.config) {
+          this.config[key] = config[key];
+        }
       }
     }
   }
-}
 
-Assetus.prototype.onData = function (file, encoding, cb) {
-  this.css = file;
-  cb();
-};
-
-Assetus.prototype.onEnd = function (cb) {
-
-  if (!this.css) {
-    this.imgStream.push(null);
-    this.cssStream.push(null);
-    return cb();
+  onData(file, encoding, cb) {
+    this.css = file;
+    cb();
   }
 
-  this.endCallback = cb;
-
-  this.strCSS = this.css.contents.toString();
-  this.AssetusList = new AssetusList(this);
-  var self = this;
-
-  var find = false;
-  this.strCSS.replace(new RegExp(this.config.searchPrefix + "[\\-\\:]{1}([^\\(]+)\\(\\\"([^\\\"]+)\\\"(\\)|,\\s*?\\\"([^\\)\\\"]*)\\\")", 'ig'), function (str) {
-    var sprtie = arguments[2];
-    var method = arguments[1];
-    var arg = arguments[4] ? arguments[4] : null;
-    /**
-     * @type {AssetusModel}
-     */
-    var sModel = self.AssetusList.push(sprtie);
-
-    if (method.indexOf('url') !== -1 || method.indexOf('ihv') !== -1) {
-      sModel.isSaveImage();
+  onEnd(cb) {
+    if (!this.css) {
+      this.imgStream.push(null);
+      this.cssStream.push(null);
+      return cb();
     }
 
-    find = true;
-    return str;
-  });
+    this.endCallback = cb;
 
-  if (!find) {
-    this.imgStream.push(null);
-    this.cssStream.push(this.css);
-    this.retStream.push(this.css);
-    return cb();
+    this.strCSS = this.css.contents.toString();
+    this.AssetusList = new AssetusList(this);
+
+    let find = false;
+    this.strCSS.replace(new RegExp(this.config.searchPrefix + "[\\-\\:]{1}([^\\(]+)\\(\\\"([^\\\"]+)\\\"(\\)|,\\s*?\\\"([^\\)\\\"]*)\\\")", 'ig'), (str, ...args) => {
+      const sprtie = args[1];
+      const method = args[0];
+      const arg = args[3] ? args[3] : null;
+      /**
+       * @type {AssetusModel}
+       */
+      const sModel = this.AssetusList.push(sprtie);
+
+      if (method.indexOf('url') !== -1 || method.indexOf('ihv') !== -1) {
+        sModel.setIsSaveImage();
+      }
+
+      find = true;
+      return str;
+    });
+
+    if (!find) {
+      this.imgStream.push(null);
+      this.cssStream.push(this.css);
+      this.retStream.push(this.css);
+      return cb();
+    }
+
+    this.AssetusList.run(this.runHandler.bind(this));
   }
 
-  this.AssetusList.run(this.runHandler.bind(this));
-};
+  saveFile(file, path, fromImagemin) {
+    const filepath = path + file.path;
+    const dirPath = pathPlugin.dirname(filepath);
 
-Assetus.prototype._saveFile = function (file, path, fromImagemin) {
-  var filepath = path + file.path;
+    mkdirp(dirPath)
+      .then(() => {
+        fs.unlink(filepath, (err) => {
+          if (err) {}
 
-  var dirPath = pathPlugin.dirname(filepath);
+          fs.writeFile(filepath, file.contents, (err) => {
+            if (err) throw err;
 
-  mkdirp(dirPath, function (err) {
-    fs.unlink(filepath, function (err) {
-      if (err) {}
-
-      fs.writeFile(filepath, file.contents, function (err) {
-        if (err) throw err;
-
-        if (!fromImagemin) {
-          console.log('assetus[save file]: ' + path + file.path);
-        }
+            if (!fromImagemin) {
+              console.log('assetus[save file]: ' + path + file.path);
+            }
+          });
+        });
       });
-    });
-  });
-};
+  }
 
-Assetus.prototype.processingImagemin = function (name, buffer, callback) {
-  imagemin.buffer(buffer, {
-    plugins: this.config.withImageminPlugins ? this.config.withImageminPlugins : [
+  processingImagemin(name, buffer, callback) {
+    imagemin.buffer(buffer, {
+      plugins: this.config.withImageminPlugins ? this.config.withImageminPlugins : [
         imageminPngquant({
-          quality: '60-70',
+          quality: [.6, .7],
           speed: 1
         })
       ]
-  })
-    .then(function (data) {
-
-      var originalSize = buffer.length;
-      var optimizedSize = data.length;
-      var saved = originalSize - optimizedSize;
-      var percent = (originalSize > 0 ? (saved / originalSize) * 100 : 0).toFixed(1).replace(/\.0$/, '');
-      var msg = saved > 0 ? '- saved ' + prettyBytes(saved) + ' (' + percent + '%)' : ' -';
-      console.log('assetus[imagemin]: ' + name + ' ' + msg);
-
-      callback(data);
     })
-    .catch(function (err) {
-      console.log('imagemin: ' + name + ' Error');
-      console.log(err);
-    });
-};
+      .then((data) => {
+        const originalSize = buffer.length;
+        const optimizedSize = data.length;
+        const saved = originalSize - optimizedSize;
+        const percent = (originalSize > 0 ? (saved / originalSize) * 100 : 0).toFixed(1).replace(/\.0$/, '');
+        const msg = saved > 0 ? '- saved ' + prettyBytes(saved) + ' (' + percent + '%)' : ' -';
+        console.log('assetus[imagemin]: ' + name + ' ' + msg);
 
-Assetus.prototype._saveImagemin = function (file, path) {
-
-  var self = this;
-
-  imagemin.buffer(file.contents, {
-    plugins: this.config.withImageminPlugins ? this.config.withImageminPlugins : [
-      imageminPngquant({
-        quality: '60-70',
-        speed: 1
+        callback(data);
       })
-    ]
-  })
-    .then(function (data) {
-
-      var originalSize = file.contents.length;
-      var optimizedSize = data.length;
-      var saved = originalSize - optimizedSize;
-      var percent = (originalSize > 0 ? (saved / originalSize) * 100 : 0).toFixed(1).replace(/\.0$/, '');
-      var msg = saved > 0 ? '- saved ' + prettyBytes(saved) + ' (' + percent + '%)' : ' -';
-      console.log('assetus[imagemin]: ' + path + file.path + ' ' + msg);
-
-      file.contents = data;
-
-      self._saveFile(file, path, true);
-    })
-    .catch(function (err) {
-      console.log('imagemin: ' + file.path + ' Error');
-      console.log(err);
-    });
-};
-
-Assetus.prototype.runHandler = function (imgFile) {
-
-  if (imgFile) {
-    this.imgFiles.push(imgFile);
-  }
-
-  if (!this.AssetusList.isComplete()) return;
-
-  this.strCSS = AssetusCssReplacer.makeCSS(this.strCSS, this.AssetusList, this.config.searchPrefix);
-
-  var i, l, path;
-
-  if (!this.config.saveImage) {
-    for (i = 0, l = this.imgFiles.length; i < l; ++i) {
-      this.imgStream.push(this.imgFiles[i]);
-    }
-  } else {
-    path = this.config.imageDirSave.indexOf('/') === 0 ? this.config.imageDirSave : this.rootPath + this.config.imageDirSave;
-    var self = this;
-    mkdirp(path, function (err) {
-      if (err) {
+      .catch((err) => {
+        console.log('imagemin: ' + name + ' Error');
         console.log(err);
-        return;
-      }
-
-      var i, l;
-      if (!self.config.withImagemin) {
-        for (i = 0, l = self.imgFiles.length; i < l; ++i) {
-          self._saveFile(self.imgFiles[i], path);
-        }
-      } else {
-        for (i = 0, l = self.imgFiles.length; i < l; ++i) {
-          self._saveImagemin(self.imgFiles[i], path);
-        }
-      }
-
-    });
-
-
+      });
   }
 
-  this.css.contents = Buffer.from(this.strCSS);
+  saveImagemin(file, path) {
+    imagemin.buffer(file.contents, {
+      plugins: this.config.withImageminPlugins ? this.config.withImageminPlugins : [
+        imageminPngquant({
+          quality: [.6, .7],
+          speed: 1
+        })
+      ]
+    })
+      .then((data) => {
+        const originalSize = file.contents.length;
+        const optimizedSize = data.length;
+        const saved = originalSize - optimizedSize;
+        const percent = (originalSize > 0 ? (saved / originalSize) * 100 : 0).toFixed(1).replace(/\.0$/, '');
+        const msg = saved > 0 ? '- saved ' + prettyBytes(saved) + ' (' + percent + '%)' : ' -';
+        console.log('assetus[imagemin]: ' + path + file.path + ' ' + msg);
 
-  this.imgStream.push(null);
-  this.cssStream.push(this.css);
+        file.contents = data;
 
-  this.retStream.push(this.css);
-  this.endCallback();
-};
+        this.saveFile(file, path, true);
+      })
+      .catch((err) => {
+        console.log('imagemin: ' + file.path + ' Error');
+        console.log(err);
+      });
+  }
 
-module.exports = function (config) {
+  runHandler(imgFile) {
+    if (imgFile) {
+      this.imgFiles.push(imgFile);
+    }
 
-  var S = new Assetus(config);
+    if (!this.AssetusList.isComplete()) return;
+
+    this.strCSS = AssetusCssReplacer.makeCSS(this.strCSS, this.AssetusList, this.config.searchPrefix);
+
+    if (!this.config.saveImage) {
+      for (let i = 0, l = this.imgFiles.length; i < l; ++i) {
+        this.imgStream.push(this.imgFiles[i]);
+      }
+    } else {
+      const path = this.config.imageDirSave.indexOf('/') === 0 ? this.config.imageDirSave : this.rootPath + this.config.imageDirSave;
+      mkdirp(path)
+        .then(() => {
+          if (!this.config.withImagemin) {
+            for (let i = 0, l = this.imgFiles.length; i < l; ++i) {
+              this.saveFile(this.imgFiles[i], path);
+            }
+          } else {
+            for (let i = 0, l = this.imgFiles.length; i < l; ++i) {
+              this.saveImagemin(this.imgFiles[i], path);
+            }
+          }
+        });
+    }
+
+    this.css.contents = Buffer.from(this.strCSS);
+
+    this.imgStream.push(null);
+    this.cssStream.push(this.css);
+
+    this.retStream.push(this.css);
+    this.endCallback();
+  }
+}
+
+export default function (config) {
+  const S = new Assetus(config);
 
   S.retStream = through(S.onData.bind(S), S.onEnd.bind(S));
   S.retStream.css = S.cssStream;
   S.retStream.img = S.imgStream;
 
   return S.retStream;
-};
+}

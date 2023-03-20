@@ -33,8 +33,11 @@ $facebook: "assets/images/facebook.png";
 
 #### gulpfile.js
 ```javascript
-var assetus = require("gulp-css-assetus");
-gulp.task('scss', function () {
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+const sass = gulpSass(dartSass);
+import assetus from "gulp-css-assetus";
+gulp.task('scss', () => {
   return gulp.src('./assets/scss/**/*.scss')
     .pipe(sass().on('error', sass.logError))
     .pipe(assetus({
@@ -97,7 +100,7 @@ $image: "assets/images/image.png?name=newimage";
     withImagemin: true,
     withImageminPlugins: [
         imageminPngquant({
-           quality: "60-70",
+           quality: [.6, .7],
            speed: 1
        })
     ],
@@ -164,19 +167,20 @@ Now you can now use
 ## Expert mode
 ### gulpfile.js
 ```javascript
-var gulp = require("gulp")
-    , merge = require("merge-stream")
-    , sass = require("gulp-sass")
-    , assetus = require("gulp-css-assetus")
-    , imagemin = require("gulp-imagemin")
-    , cssnano = require("gulp-cssnano")
-    , imageminPngquant = require("imagemin-pngquant")
-    , imageminMozjpeg = require("imagemin-mozjpeg")
-    , buffer = require("vinyl-buffer")
-    ;
+import gulp from "gulp";
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+import assetus from "gulp-css-assetus";
+import imagemin from "gulp-imagemin";
+import cssnano from "gulp-cssnano";
+import imageminPngquant from "imagemin-pngquant";
+import imageminMozjpeg from "imagemin-mozjpeg";
+import buffer from "vinyl-buffer";
+import merge from "merge-buffer";
+const sass = gulpSass(dartSass);
 
-gulp.task("scss", function () {
-    var assetus = gulp.src("./scss/**/*.scss")
+gulp.task("scss", () => {
+    const assetus = gulp.src("./scss/**/*.scss")
         .pipe(sourcemaps.init())
         .pipe(sass().on("error", sass.logError))
         .pipe(assetus({
@@ -186,20 +190,21 @@ gulp.task("scss", function () {
             imageDirCSS: "../images/",
             imageDirSave: "public/images/"
         }));
-    
-    var stream_css = assetus.css
+
+    // Stream CSS
+    const stream_css = assetus.css
         .pipe(cssnano())
         .pipe(sourcemaps.write())
         .pipe(gulp.dest("./public/css"));
-        
-        
-    var stream_img = assetus.img
+
+    // Stream images
+    const stream_img = assetus.img
         .pipe(buffer())
         .pipe(imagemin(
             [
                 imageminMozjpeg(),
                 imageminPngquant({
-                    quality: "60-70",
+                    quality: [.6, .7],
                     speed: 1
                 })
             ]

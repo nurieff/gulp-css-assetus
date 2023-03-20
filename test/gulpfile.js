@@ -1,8 +1,10 @@
-var gulp = require('gulp')
-  , assetus = require('../index')
-  , sass = require('gulp-sass');
+import gulp from "gulp";
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+const sass = gulpSass(dartSass);
+import assetus from "../index.js";
 
-gulp.task('css', function () {
+gulp.task('css', () => {
   return gulp.src('./assets/css/*.css')
     .pipe(assetus({
       imageDirSave: 'public/images/',
@@ -11,7 +13,7 @@ gulp.task('css', function () {
     .pipe(gulp.dest('./public/css'));
 });
 
-gulp.task('scss', function () {
+gulp.task('scss', () => {
   return gulp.src('./assets/scss/**/*.scss')
     .pipe(sass().on('error', sass.logError))
     .pipe(assetus({
@@ -22,7 +24,7 @@ gulp.task('scss', function () {
 
 gulp.task("default", gulp.series(['css', 'scss']));
 
-gulp.task("watch", function () {
+gulp.task("watch", () => {
 
   gulp.watch([
     './assets/css/*.css'

@@ -1,148 +1,138 @@
-/**
- * @param {String} css
- * @param {AssetusList} AssetusList
- * @param {String} searchPrefix
- * @constructor
- */
-function AssetusCssReplacer(css, AssetusList, searchPrefix) {
+class AssetusCssReplacer {
   /**
-   * @type {String}
+   * @param {String} css
+   * @param {AssetusList} AssetusList
+   * @param {String} searchPrefix
+   * @constructor
    */
-  this.css = css;
+  constructor(css, AssetusList, searchPrefix) {
+    /**
+     * @type {String}
+     */
+    this.css = css;
 
-  this._searchPrefix = searchPrefix;
+    this.searchPrefix = searchPrefix;
 
-  /**
-   * @type {AssetusList}
-   */
-  this.AssetusList = AssetusList;
-}
-
-AssetusCssReplacer.prototype._reg = function (mod, dopArgs) {
-
-  var r = [];
-  r.push(this._searchPrefix);
-  if (mod) {
-    if (Array.isArray(mod)) {
-      r.push("\\-(" + mod.join('|') + ')');
-    } else {
-      r.push("\\-" + mod);
-    }
+    /**
+     * @type {AssetusList}
+     */
+    this.AssetusList = AssetusList;
   }
 
-  if (dopArgs) {
-    r.push("\\(\\\"([^\\)\\\"]+)\\\"");
-    r.push(",?\\s*?\\\"?([^\\)\\\"]*)\\\"?\\)");
-  } else {
-    r.push("\\(\\\"([^\\)\\\"]+)\\\"\\)");
-  }
-
-  return new RegExp(r.join(''), 'ig');
-};
-
-AssetusCssReplacer.prototype._regAsProperty = function (mod, dopArgs) {
-
-  var r = [];
-  r.push(this._searchPrefix + '\\:\\s*?');
-
-  if (Array.isArray(mod)) {
-    r.push("(" + mod.join('|') + ')');
-  } else {
-    r.push(mod);
-  }
-
-
-  if (dopArgs) {
-    r.push("\\(\\\"([^\\)\\\"]+)\\\"");
-    r.push(",?\\s*?\\\"?([^\\)\\\"]*)\\\"?\\)");
-  } else {
-    r.push("\\(\\\"([^\\)\\\"]+)\\\"\\)");
-  }
-
-  return new RegExp(r.join(''), 'ig');
-};
-
-AssetusCssReplacer.prototype._common = function () {
-
-  var allow = ['width','height'];
-  var self = this;
-  this.css = this.css.replace(this._reg(allow, true), function () {
-    var propertiy = arguments[1];
-    var str = arguments[2];
-
-    if (!self.AssetusList.get(str)) {
-      if (['height','width'].indexOf(propertiy) !== -1) {
-        return 'auto';
+  reg(mod, dopArgs) {
+    const r = [];
+    r.push(this.searchPrefix);
+    if (mod) {
+      if (Array.isArray(mod)) {
+        r.push("\\-(" + mod.join('|') + ')');
+      } else {
+        r.push("\\-" + mod);
       }
-
-      return '';
     }
 
-    return self.AssetusList.get(str)[propertiy]();
-  });
+    if (dopArgs) {
+      r.push("\\(\\\"([^\\)\\\"]+)\\\"");
+      r.push(",?\\s*?\\\"?([^\\)\\\"]*)\\\"?\\)");
+    } else {
+      r.push("\\(\\\"([^\\)\\\"]+)\\\"\\)");
+    }
 
-  return this;
-};
+    return new RegExp(r.join(''), 'ig');
+  }
 
-AssetusCssReplacer.prototype._forParent = function () {
-  var allow = ['url','size','inline'];
-  var self = this;
-  this.css = this.css.replace(this._reg(allow), function () {
-    var propertiy = arguments[1];
-    var str = arguments[2];
+  regAsProperty(mod, dopArgs) {
+    const r = [];
+    r.push(this.searchPrefix + '\\:\\s*?');
 
-    if (!self.AssetusList.get(str)) {
-      if (propertiy === 'size') {
+    if (Array.isArray(mod)) {
+      r.push("(" + mod.join('|') + ')');
+    } else {
+      r.push(mod);
+    }
+
+
+    if (dopArgs) {
+      r.push("\\(\\\"([^\\)\\\"]+)\\\"");
+      r.push(",?\\s*?\\\"?([^\\)\\\"]*)\\\"?\\)");
+    } else {
+      r.push("\\(\\\"([^\\)\\\"]+)\\\"\\)");
+    }
+
+    return new RegExp(r.join(''), 'ig');
+  }
+
+  common() {
+    const allow = ['width','height'];
+    this.css = this.css.replace(this.reg(allow, true), (...args) => {
+      const propertiy = args[1];
+      const str = args[2];
+
+      if (!this.AssetusList.get(str)) {
+        if (allow.includes(propertiy)) {
+          return 'auto';
+        }
+
         return '';
       }
 
-      return '';
-    }
+      return this.AssetusList.get(str)[propertiy]();
+    });
 
-    return self.AssetusList.get(str)[propertiy]();
-  });
+    return this;
+  }
 
-  return this;
-};
+  forParent() {
+    const allow = ['url', 'size', 'inline'];
+    this.css = this.css.replace(this.reg(allow), (...args) => {
+      const propertiy = args[1];
+      const str = args[2];
 
-AssetusCssReplacer.prototype._ihw = function () {
-  var self = this;
-  this.css = this.css.replace(this._regAsProperty('ihw', true), function () {
-    var str = arguments[1];
-    var img = arguments[2];
+      if (!this.AssetusList.get(str)) {
+        if (propertiy === 'size') {
+          return '';
+        }
 
-    if (!img || !self.AssetusList.get(str)) {
-      return '';
-    }
+        return '';
+      }
 
-    return [
-      'background-image: ' + self.AssetusList.get(str).position(),
-      'height: ' + self.AssetusList.get(str).height(),
-      'width: ' + self.AssetusList.get(str).width()
-    ].join(';');
-  });
+      return this.AssetusList.get(str)[propertiy]();
+    });
 
-  return this;
-};
+    return this;
+  }
 
-/**
- * @returns {AssetusCssReplacer}
- */
-AssetusCssReplacer.prototype.run = function () {
-    this._forParent()
-    ._common()
-    ._ihw()
-  ;
+  ihw() {
+    this.css = this.css.replace(this.regAsProperty('ihw', true), (...args) => {
+      const str = args[1];
+      const img = args[2];
 
-  return this;
-};
+      if (!img || !this.AssetusList.get(str)) {
+        return '';
+      }
 
-/**
- * @returns {String}
- */
-AssetusCssReplacer.prototype.getCss = function () {
-  return this.css;
-};
+      return [
+        'background-image: ' + this.AssetusList.get(str).position(),
+        'height: ' + this.AssetusList.get(str).height(),
+        'width: ' + this.AssetusList.get(str).width()
+      ].join(';');
+    });
+
+    return this;
+  }
+
+  run() {
+    this.forParent()
+      .common()
+      .ihw()
+    ;
+
+    return this;
+  }
+
+  getCss() {
+    return this.css;
+  }
+}
 
 /**
  * @param {String} css
@@ -151,8 +141,8 @@ AssetusCssReplacer.prototype.getCss = function () {
  * @returns {String}
  */
 AssetusCssReplacer.makeCSS = function (css, AssetusList, searchPrefix) {
-  var R = new AssetusCssReplacer(css, AssetusList, searchPrefix);
+  const R = new AssetusCssReplacer(css, AssetusList, searchPrefix);
   return R.run().getCss();
 };
 
-module.exports = AssetusCssReplacer;
+export default AssetusCssReplacer;

@@ -1,11 +1,19 @@
-$auth-sprite: "assets/images/auth/vk.png?name=s/nevk";
+$vk-sprite: "assets/images/auth/vk.png?name=s/nevk";
+$google-sprite: "assets/images/auth/google.png";
 $radio-sprite: "assets/images/radio.png";
 
 .vk {
-  background-image: assetus-url($auth-sprite);
-  background-size: assetus-size($auth-sprite);
-  height: assetus-height($auth-sprite);
-  width: assetus-width($auth-sprite);
+  background-image: assetus-url($vk-sprite);
+  background-size: assetus-size($vk-sprite);
+  height: assetus-height($vk-sprite);
+  width: assetus-width($vk-sprite);
+}
+
+.google {
+  background-image: assetus-url($google-sprite);
+  background-size: assetus-size($google-sprite);
+  height: assetus-height($google-sprite);
+  width: assetus-width($google-sprite);
 }
 
 .radio {
